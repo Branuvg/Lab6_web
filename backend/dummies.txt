@@ -1,0 +1,201 @@
+package main
+
+import (
+    "encoding/json"
+    "log"
+    "net/http"
+    "github.com/gorilla/mux"
+    "github.com/rs/cors" 
+	"strconv"
+)
+
+// Estructura para la serie
+type Serie struct {
+    ID               int    `json:"id"`
+    Title            string `json:"title"`
+    Status           string `json:"status"`
+    LastEpisodeWatched int    `json:"lastEpisodeWatched"`
+    TotalEpisodes    int    `json:"totalEpisodes"`
+    Ranking          int    `json:"ranking"`
+}
+
+// Estructura para el mensaje en JSON
+type Message struct {
+    Message string `json:"message"`
+}
+
+// Lista dummy de series
+var series = []Serie{
+    {ID: 1, Title: "Serie 1", Status: "Watching", LastEpisodeWatched: 5, TotalEpisodes: 10, Ranking: 8},
+    {ID: 2, Title: "Serie 2", Status: "Plan to Watch", LastEpisodeWatched: 0, TotalEpisodes: 12, Ranking: 7},
+}
+
+func main() {
+    r := mux.NewRouter()
+    
+    // Ruta principal ("/") que retorna un mensaje en JSON
+    r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json") // Asegura que la respuesta sea en JSON
+        message := Message{"Hello, World!"} // Mensaje
+        json.NewEncoder(w).Encode(message)  // Codifica el mensaje como JSON y lo envía al cliente
+    })
+
+    // Ruta para obtener todas las series
+    r.HandleFunc("/api/series", getAllSeries).Methods("GET")
+
+    // Ruta para crear una nueva serie (dummy)
+    r.HandleFunc("/api/series", crearSerie).Methods("POST")
+
+	r.HandleFunc("/api/series/{id}", deleteSerie).Methods("DELETE")
+
+	r.HandleFunc("/api/series/{id}", getSerieByID).Methods("GET")
+
+	r.HandleFunc("/api/series/{id}", updateSerie).Methods("PUT")
+
+    // Agrega más rutas si es necesario
+    r.HandleFunc("/otra-ruta", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
+        message := Message{"Esta es otra ruta"}
+        json.NewEncoder(w).Encode(message)
+    })
+
+    // Configurar CORS
+    c := cors.New(cors.Options{
+        AllowedOrigins:   []string{"http://127.0.0.1:3000"}, // Origen permitido (tu frontend)
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}, // Métodos permitidos
+        AllowedHeaders:   []string{"Content-Type", "Authorization"}, // Cabeceras permitidas
+        AllowCredentials: true,
+    })
+
+    // Aplicar el middleware CORS
+    handler := c.Handler(r)
+
+    // Inicia el servidor
+    log.Println("Servidor corriendo en http://localhost:8080")
+    log.Fatal(http.ListenAndServe(":8080", handler))
+}
+
+// getAllSeries maneja las solicitudes GET para obtener todas las series
+func getAllSeries(w http.ResponseWriter, r *http.Request) {
+    if r.Method == "GET" {
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(series)
+    } else {
+        http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+    }
+}
+
+// crearSerie maneja las solicitudes POST para crear una nueva serie
+func crearSerie(w http.ResponseWriter, r *http.Request) {
+    if r.Method == "POST" {
+        var nuevaSerie Serie
+
+        // Decodificar el cuerpo de la solicitud JSON
+        err := json.NewDecoder(r.Body).Decode(&nuevaSerie)
+        if err != nil {
+            http.Error(w, "Error al leer el cuerpo de la solicitud", http.StatusBadRequest)
+            return
+        }
+
+        // Asignar un ID a la nueva serie (por ejemplo, el siguiente ID disponible)
+        nuevaSerie.ID = len(series) + 1
+
+        // Agregar la nueva serie a la lista (esto se puede hacer más sofisticado en una base de datos real)
+        series = append(series, nuevaSerie)
+
+        // Establecer el tipo de contenido y devolver la nueva serie en formato JSON
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusCreated)
+        json.NewEncoder(w).Encode(nuevaSerie)
+    } else {
+        http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+    }
+}
+
+// deleteSerie maneja las solicitudes DELETE para eliminar una serie por ID
+func deleteSerie(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+
+    // Convertir el ID de string a entero
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Buscar la serie y eliminarla
+    for i, serie := range series {
+        if serie.ID == id {
+            // Eliminar la serie de la lista
+            series = append(series[:i], series[i+1:]...)
+            w.WriteHeader(http.StatusNoContent) // Código 204, sin contenido
+            return
+        }
+    }
+
+    // Si no se encuentra la serie, devolver error 404
+    http.Error(w, "Serie no encontrada", http.StatusNotFound)
+} 
+
+// getSerieByID maneja las solicitudes GET para obtener una serie por ID
+func getSerieByID(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+
+    // Convertir el ID de string a entero
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Buscar la serie en la lista
+    for _, serie := range series {
+        if serie.ID == id {
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(serie)
+            return
+        }
+    }
+
+    // Si no se encuentra, devolver error 404
+    http.Error(w, "Serie no encontrada", http.StatusNotFound)
+}
+
+// updateSerie maneja las solicitudes PUT para actualizar una serie existente
+func updateSerie(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+
+    // Convertir el ID de string a entero
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    var updatedSerie Serie
+
+    // Decodificar el cuerpo de la solicitud JSON
+    err = json.NewDecoder(r.Body).Decode(&updatedSerie)
+    if err != nil {
+        http.Error(w, "Error al leer el cuerpo de la solicitud", http.StatusBadRequest)
+        return
+    }
+
+    // Buscar la serie y actualizarla
+    for i, serie := range series {
+        if serie.ID == id {
+            series[i] = updatedSerie
+            series[i].ID = id // Asegurar que el ID no cambie
+
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(series[i])
+            return
+        }
+    }
+
+    // Si no se encuentra la serie, devolver error 404
+    http.Error(w, "Serie no encontrada", http.StatusNotFound)
+}

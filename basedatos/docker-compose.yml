@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # Cambia esto por una contraseña más segura
+      MYSQL_DATABASE: series_tracker  # Nombre de la base de datos
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword  # Cambia esto por una contraseña más segura
+    ports:
+      - "3306:3306"  # Mapea el puerto 3306 de MySQL al mismo puerto en el host
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Ejecutar las tablas al iniciar
+    networks:
+      - mysql_network
+
+networks:
+  mysql_network:
+    driver: bridge
