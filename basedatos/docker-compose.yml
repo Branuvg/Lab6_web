@@ -6,16 +6,31 @@ services:
     container_name: mysql-container
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword  # Cambia esto por una contraseña más segura
-      MYSQL_DATABASE: series_tracker  # Nombre de la base de datos
+      MYSQL_DATABASE: series_tracker
       MYSQL_USER: user
       MYSQL_PASSWORD: userpassword  # Cambia esto por una contraseña más segura
     ports:
-      - "3306:3306"  # Mapea el puerto 3306 de MySQL al mismo puerto en el host
+      - "3306:3306"
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Ejecutar las tablas al iniciar
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - mysql_network
+      - app_network
+
+  backend:
+    build: ../backend
+    container_name: go-backend
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: user
+      DB_PASSWORD: userpassword
+      DB_NAME: series_tracker
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
 
 networks:
-  mysql_network:
+  app_network:
     driver: bridge

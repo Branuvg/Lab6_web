@@ -6,9 +6,11 @@ import (
     "fmt"
     "log"
     "net/http"
+    "os"
+
     "github.com/gorilla/mux"
     "github.com/rs/cors"
-    _ "github.com/go-sql-driver/mysql" // Importar el driver de MySQL
+    _ "github.com/go-sql-driver/mysql"
 )
 
 // Estructura para la serie
@@ -31,8 +33,15 @@ var db *sql.DB
 
 // Función para inicializar la base de datos
 func initDB() {
+    dbUser := os.Getenv("DB_USER")
+    dbPassword := os.Getenv("DB_PASSWORD")
+    dbHost := os.Getenv("DB_HOST")
+    dbName := os.Getenv("DB_NAME")
+
+    dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", dbUser, dbPassword, dbHost, dbName)
+
     var err error
-    db, err = sql.Open("mysql", "user:userpassword@tcp(localhost:3306)/series_tracker")
+    db, err = sql.Open("mysql", dsn)
     if err != nil {
         log.Fatal(err)
     }
@@ -41,22 +50,9 @@ func initDB() {
         log.Fatal(err)
     }
     fmt.Println("Conexión exitosa a la base de datos")
-
-    // Verificar si ya existen datos en la tabla
-    var count int
-    err = db.QueryRow("SELECT COUNT(*) FROM series").Scan(&count)
-    if err != nil {
-        log.Fatal("Error al verificar datos en la base de datos:", err)
-    }
-
-    if count == 0 {
-        fmt.Println("Insertando datos iniciales...")
-        insertInitialData()
-    } else {
-        fmt.Println("La base de datos ya tiene datos, no es necesario insertar.")
-    }
 }
 
+/*
 // Función para insertar datos iniciales
 func insertInitialData() {
     initialSeries := []Serie{
@@ -75,6 +71,7 @@ func insertInitialData() {
     }
     fmt.Println("Datos iniciales insertados correctamente.")
 }
+*/
 
 func main() {
     initDB() // Llamar a la función de inicialización de la base de datos
