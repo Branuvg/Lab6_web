@@ -63,4 +63,4 @@ Se proporciona una colección de Postman para facilitar la prueba de la API. Pue
 ![alt text](image-1.png)
 
 ## Archivo llms.txt
-Se ha incluido un archivo `llms.txt` con una explicación del uso del API.
+Se ha incluido un archivo ![alt text](llms.txt) con una explicación del uso del API.
