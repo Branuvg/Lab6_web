@@ -51,27 +51,6 @@ func initDB() {
     fmt.Println("Conexión exitosa a la base de datos")
 }
 
-/*
-// Función para insertar datos iniciales
-func insertInitialData() {
-    initialSeries := []Serie{
-        {Title: "Breaking Bad", Status: "Completed", LastEpisodeWatched: 62, TotalEpisodes: 62, Ranking: 10},
-        {Title: "Attack on Titan", Status: "Ongoing", LastEpisodeWatched: 87, TotalEpisodes: 87, Ranking: 9},
-        {Title: "Stranger Things", Status: "Ongoing", LastEpisodeWatched: 34, TotalEpisodes: 34, Ranking: 8},
-        {Title: "Game of Thrones", Status: "Completed", LastEpisodeWatched: 73, TotalEpisodes: 73, Ranking: 7},
-    }
-
-    query := "INSERT INTO series (title, status, last_episode_watched, total_episodes, ranking) VALUES (?, ?, ?, ?, ?)"
-    for _, serie := range initialSeries {
-        _, err := db.Exec(query, serie.Title, serie.Status, serie.LastEpisodeWatched, serie.TotalEpisodes, serie.Ranking)
-        if err != nil {
-            log.Println("Error insertando datos iniciales:", err)
-        }
-    }
-    fmt.Println("Datos iniciales insertados correctamente.")
-}
-*/
-
 func main() {
     initDB() // Llamar a la función de inicialización de la base de datos
 
@@ -317,7 +296,7 @@ func upvoteSeries(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id := vars["id"]
 
-    query := "UPDATE series SET score = score + 1 WHERE id = ?"
+    query := "UPDATE series SET ranking = ranking + 1 WHERE id = ?"
     result, err := db.Exec(query, id)
     if err != nil {
         http.Error(w, "Error al aumentar la puntuación", http.StatusInternalServerError)
@@ -339,7 +318,7 @@ func downvoteSeries(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id := vars["id"]
 
-    query := "UPDATE series SET score = score - 1 WHERE id = ?"
+    query := "UPDATE series SET ranking = ranking - 1 WHERE id = ?"
     result, err := db.Exec(query, id)
     if err != nil {
         http.Error(w, "Error al disminuir la puntuación", http.StatusInternalServerError)
