@@ -7,7 +7,6 @@ import (
     "log"
     "net/http"
     "os"
-
     "github.com/gorilla/mux"
     "github.com/rs/cors"
     _ "github.com/go-sql-driver/mysql"
@@ -78,6 +77,14 @@ func main() {
 
     r := mux.NewRouter()
 
+    // Agregar aquí el manejo de las solicitudes OPTIONS
+    r.PathPrefix("/api/series").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.Method == "OPTIONS" {
+            w.WriteHeader(http.StatusOK)
+            return
+        }
+    }).Methods("OPTIONS")
+
     // Ruta principal ("/") que retorna un mensaje en JSON
     r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Content-Type", "application/json") // Asegura que la respuesta sea en JSON
@@ -92,13 +99,15 @@ func main() {
     r.HandleFunc("/api/series/{id}", updateSerie).Methods("PUT")
     r.HandleFunc("/api/series/{id}", deleteSerie).Methods("DELETE")
 
-	//r.HandleFunc("/api/series/{id}/upvote", upvoteSerie).Methods("PATCH")
-    //r.HandleFunc("/api/series/{id}/downvote", downvoteSerie).Methods("PATCH")
+    r.HandleFunc("/api/series/{id}/episode", incrementEpisode).Methods("PATCH")
+    //r.HandleFunc("/api/series/{id}/upvote", UpvoteRanking).Methods("PATCH")
+    //r.HandleFunc("/api/series/{id}/downvote", DownvoteRanking).Methods("PATCH")
+    //r.HandleFunc("/api/series/{id}/status", UpdateStatus).Methods("PATCH")
 
     // Configurar CORS
     c := cors.New(cors.Options{
         AllowedOrigins:   []string{"*"}, // Origen permitido (tu frontend)
-        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}, // Métodos permitidos
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"}, // Métodos permitidos
         AllowedHeaders:   []string{"Content-Type", "Authorization"}, // Cabeceras permitidas
         AllowCredentials: true,
     })
@@ -248,4 +257,26 @@ func updateSerie(w http.ResponseWriter, r *http.Request) {
     } else {
         http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
     }
+}
+
+// incrementEpisode maneja las solicitudes PATCH para incrementar el episodio actual de una serie
+func incrementEpisode(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    id := vars["id"]
+
+    query := "UPDATE series SET last_episode_watched = last_episode_watched + 1 WHERE id = ?"
+    result, err := db.Exec(query, id)
+    if err != nil {
+        http.Error(w, "Error al actualizar el episodio", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil || rowsAffected == 0 {
+        http.Error(w, "Serie no encontrada", http.StatusNotFound)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(Message{"Episodio actualizado correctamente"})
 }

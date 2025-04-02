@@ -30,6 +30,7 @@ services:
       - "8080:8080"
     networks:
       - app_network
+    restart: unless-stopped
 
 networks:
   app_network:
