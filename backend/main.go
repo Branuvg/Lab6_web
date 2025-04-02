@@ -100,9 +100,9 @@ func main() {
     r.HandleFunc("/api/series/{id}", deleteSerie).Methods("DELETE")
 
     r.HandleFunc("/api/series/{id}/episode", incrementEpisode).Methods("PATCH")
-    //r.HandleFunc("/api/series/{id}/upvote", UpvoteRanking).Methods("PATCH")
-    //r.HandleFunc("/api/series/{id}/downvote", DownvoteRanking).Methods("PATCH")
-    //r.HandleFunc("/api/series/{id}/status", UpdateStatus).Methods("PATCH")
+    r.HandleFunc("/api/series/{id}/status", updateStatus).Methods("PATCH")
+    r.HandleFunc("/api/series/{id}/upvote", upvoteSeries).Methods("PATCH")
+    r.HandleFunc("/api/series/{id}/downvote", downvoteSeries).Methods("PATCH")
 
     // Configurar CORS
     c := cors.New(cors.Options{
@@ -279,4 +279,79 @@ func incrementEpisode(w http.ResponseWriter, r *http.Request) {
 
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(Message{"Episodio actualizado correctamente"})
+}
+
+// updateStatus maneja las solicitudes PATCH para actualizar el estado de una serie
+func updateStatus(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    id := vars["id"]
+
+    var data struct {
+        Status string `json:"status"`
+    }
+
+    if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+        http.Error(w, "Error al leer el cuerpo de la solicitud", http.StatusBadRequest)
+        return
+    }
+
+    query := "UPDATE series SET status = ? WHERE id = ?"
+    result, err := db.Exec(query, data.Status, id)
+    if err != nil {
+        http.Error(w, "Error al actualizar el estado", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, err := result.RowsAffected()
+    if err != nil || rowsAffected == 0 {
+        http.Error(w, "Serie no encontrada", http.StatusNotFound)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(Message{"Estado actualizado correctamente"})
+}
+
+// upvoteSeries aumenta la puntuación de una serie en 1
+func upvoteSeries(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    id := vars["id"]
+
+    query := "UPDATE series SET score = score + 1 WHERE id = ?"
+    result, err := db.Exec(query, id)
+    if err != nil {
+        http.Error(w, "Error al aumentar la puntuación", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, _ := result.RowsAffected()
+    if rowsAffected == 0 {
+        http.Error(w, "Serie no encontrada", http.StatusNotFound)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(Message{"Puntuación aumentada"})
+}
+
+// downvoteSeries disminuye la puntuación de una serie en 1
+func downvoteSeries(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    id := vars["id"]
+
+    query := "UPDATE series SET score = score - 1 WHERE id = ?"
+    result, err := db.Exec(query, id)
+    if err != nil {
+        http.Error(w, "Error al disminuir la puntuación", http.StatusInternalServerError)
+        return
+    }
+
+    rowsAffected, _ := result.RowsAffected()
+    if rowsAffected == 0 {
+        http.Error(w, "Serie no encontrada", http.StatusNotFound)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(Message{"Puntuación disminuida"})
 }
