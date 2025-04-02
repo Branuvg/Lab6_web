@@ -57,10 +57,10 @@ El backend permite solicitudes desde cualquier origen (`*`), con los métodos `G
 
 ## Pruebas con Postman
 Se proporciona una colección de Postman para facilitar la prueba de la API. Puedes acceder a ella en el siguiente enlace:
-[Enlace a la colección de Postman](#)
+[Enlace a la colección de Postman](Lab6.postman_collection.json)
 
 ## Captura de Pantalla del funcionamiento
 ![alt text](image-1.png)
 
 ## Archivo llms.txt
-Se ha incluido un archivo ![alt text](llms.txt) con una explicación del uso del API.
+Se ha incluido un archivo [llms.txt](llms.txt) con una explicación del uso del API.
