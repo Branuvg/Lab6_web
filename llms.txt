@@ -1,0 +1,123 @@
+# Uso de la API de Series Tracker
+
+Esta API permite gestionar una lista de series de TV o anime mediante operaciones CRUD y algunas funciones adicionales.
+
+## Base URL
+```
+http://localhost:8080
+```
+
+## Formato de Datos
+La API utiliza JSON para las solicitudes y respuestas. Un objeto `Serie` tiene la siguiente estructura:
+```json
+{
+  "id": 1,
+  "title": "Breaking Bad",
+  "status": "Watching",
+  "lastEpisodeWatched": 5,
+  "totalEpisodes": 62,
+  "ranking": 1
+}
+```
+
+## Endpoints
+
+### 1. Obtener todas las series
+**Solicitud:**
+```
+GET /api/series
+```
+**Respuesta:**
+```json
+[
+  {
+    "id": 1,
+    "title": "Breaking Bad",
+    "status": "Watching",
+    "lastEpisodeWatched": 5,
+    "totalEpisodes": 62,
+    "ranking": 1
+  }
+]
+```
+
+### 2. Obtener una serie por ID
+**Solicitud:**
+```
+GET /api/series/{id}
+```
+**Ejemplo:**
+```
+GET /api/series/1
+```
+
+### 3. Crear una nueva serie
+**Solicitud:**
+```
+POST /api/series
+```
+**Cuerpo:**
+```json
+{
+  "title": "New Series",
+  "status": "Plan to Watch",
+  "lastEpisodeWatched": 0,
+  "totalEpisodes": 24,
+  "ranking": 2
+}
+```
+
+### 4. Actualizar una serie
+**Solicitud:**
+```
+PUT /api/series/{id}
+```
+**Cuerpo:**
+```json
+{
+  "title": "Updated Series",
+  "status": "Completed",
+  "lastEpisodeWatched": 24,
+  "totalEpisodes": 24,
+  "ranking": 1
+}
+```
+
+### 5. Eliminar una serie
+**Solicitud:**
+```
+DELETE /api/series/{id}
+```
+
+### 6. Cambiar estado de una serie
+**Solicitud:**
+```
+PATCH /api/series/{id}/status
+```
+**Cuerpo:**
+```json
+{
+  "status": "Dropped"
+}
+```
+
+### 7. Incrementar el episodio visto
+**Solicitud:**
+```
+PATCH /api/series/{id}/episode
+```
+
+### 8. Votar a favor o en contra
+**Subir ranking:**
+```
+PATCH /api/series/{id}/upvote
+```
+**Bajar ranking:**
+```
+PATCH /api/series/{id}/downvote
+```
+
+---
+
+Este archivo proporciona una guía básica para interactuar con la API de Series Tracker. Se recomienda usar Postman o cURL para probar las solicitudes.
+
